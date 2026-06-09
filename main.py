@@ -1,6 +1,7 @@
 from interface.interface import *
 from img_process.pop_mask import *
 from img_process.local_process import *
+from others.differences import *
 from others.histrogram_generator import (
     generate_histogram,
     normalize_histogram,
@@ -9,6 +10,7 @@ from others.histrogram_generator import (
 
 
 IMG_PATH = "2_bracos.webp"
+MECI_PATH = "meci.png"
 
 
 def main():
@@ -38,6 +40,10 @@ def main():
         
     laplacian_img = laplacian_filter(img)
     print_img_list.append((laplacian_img, "Imagem Final (Filtro Laplaciano)", "gray"))
+
+    meci_img = load_image(MECI_PATH)
+    diff_img = difference_between_colored_images(img, meci_img)
+    print_img_list.append((diff_img, "Diferença entre Dois Braços e Messi"))
     
     display_multi_image(print_img_list)
 
