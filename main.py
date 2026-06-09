@@ -34,6 +34,9 @@ def main():
     laplacian_img = laplacian_filter(img)
     print_img_list.append((laplacian_img, "Imagem Final (Filtro Laplaciano)", "gray"))
     
+    gaussian_img = gaussian_filter(img, 7)
+    print_img_list.append((gaussian_img, "Imagem Final (Filtro Gaussiano)", "gray"))
+    
     display_multi_image(print_img_list)
     
 if __name__ == "__main__":

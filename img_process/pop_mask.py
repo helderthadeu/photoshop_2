@@ -85,4 +85,29 @@ def laplacian_filter(image):
     final_img_array = np.array(final_img, dtype=np.uint8)
     
     return final_img_array
+
+def derivate_filter(image):
     
+    gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray_img = gray_img.astype(np.int32)
+    padding = 1
+    
+    completed_img = complete_img(gray_img, padding)
+    
+    final_img = []
+    for index_x, x in enumerate(completed_img[padding:-padding]):
+        row_list = []
+
+        for index_y,y in enumerate(x[padding:-padding]):
+            filtered_point = completed_img[index_x][index_y+1] -  completed_img[index_x][index_y]
+            row_list.append(filtered_point)
+
+        final_img.append(row_list)
+
+    # Convert final_img to a NumPy array for display
+    final_img_array = np.array(final_img, dtype=np.uint32)
+    
+    return final_img_array
+
+
+

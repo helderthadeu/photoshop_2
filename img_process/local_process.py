@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import math
 from img_process.util import complete_img
 
 
@@ -43,3 +44,26 @@ def convolutional_mask(image, mask:list[list]):
     final_img_array = np.array(final_img, dtype=np.uint32)
     
     return final_img_array
+
+def gaussian_filter(image, mask_size = 3):
+    height_img, width_img, _ =  image.shape
+    
+    if (mask_size % 2) == 0:
+        raise Exception("Size filter error! Please select a filter with odd size.")
+    
+    if(mask_size>height_img) or (mask_size> width_img):
+        raise Exception("Size filter error! Please select a filter with lower size.")
+    
+    padding = int((mask_size-1)/2)
+    mask = []
+    for y in range(-padding, padding + 1):
+        row_list = []
+
+        for x in range(-padding, padding + 1):
+            
+            distance = math.sqrt(x*x + y*y)
+            row_list.append(distance)
+        mask.append(row_list)
+    
+    return convolutional_mask(image, mask)
+
