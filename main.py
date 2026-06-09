@@ -1,6 +1,11 @@
 from interface.interface import *
 from img_process.pop_mask import *
 from img_process.local_process import *
+from others.histrogram_generator import (
+    generate_histogram,
+    normalize_histogram,
+    plot_histogram,
+)
 
 
 IMG_PATH = "2_bracos.webp"
@@ -35,8 +40,12 @@ def main():
     print_img_list.append((laplacian_img, "Imagem Final (Filtro Laplaciano)", "gray"))
     
     display_multi_image(print_img_list)
+
+    histogram = generate_histogram(img)
+    plot_histogram(histogram, "Histograma", "Frequencia")
+    normalized_histogram = normalize_histogram(histogram)
+    plot_histogram(normalized_histogram, "Histograma Normalizado", "Probabilidade")
     
 if __name__ == "__main__":
     print("Start image processing")
     main()
-    
