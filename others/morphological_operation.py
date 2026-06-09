@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from models import ImageMatrix
+from models.models import ImageMatrix
 
 def compute_image_difference(image_a: ImageMatrix, image_b: ImageMatrix) -> ImageMatrix:
     """

@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from models import ImageMatrix
+from models.models import ImageMatrix
 
 def invert_image(image_matrix: ImageMatrix) -> ImageMatrix:
     """

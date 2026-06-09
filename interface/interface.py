@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tkinter as tk
 from tkinter import filedialog
-from models import ImageMatrix, FilePath
+from models.models import ImageMatrix, FilePath
 
 def load_image(path:str):
     img = cv2.imread(path)
@@ -106,7 +106,7 @@ def save_pgm_file() -> FilePath:
     root.withdraw()
 
     # Open the save dialog suggesting .pgm as the default extension
-    file_path: FilePath = filedialog.askasfilename(
+    file_path: FilePath = filedialog.asksaveasfilename(
         title="Save PGM File",
         defaultextension=".pgm",
         filetypes=[("PGM Files", "*.pgm")]
