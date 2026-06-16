@@ -1,5 +1,5 @@
 """Point-wise image processing operations that work directly on ImageMatrix."""
-from models.models import ImageMatrix
+from src.domain.types import ImageMatrix
 
 _MAX_PIXEL = 255
 _MIN_PIXEL = 0

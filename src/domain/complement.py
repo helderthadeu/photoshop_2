@@ -1,5 +1,5 @@
 """Complement (negative) operation for grayscale images."""
-from models.models import ImageMatrix
+from src.domain.types import ImageMatrix
 
 
 def invert_image(matrix: ImageMatrix) -> ImageMatrix:

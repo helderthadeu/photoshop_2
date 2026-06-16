@@ -3,9 +3,9 @@ import math
 
 import numpy as np
 
-from img_process.local_process import apply_convolution
-from img_process.util import pad_image, to_grayscale, image_dimensions
-from models.models import ImageMatrix
+from src.domain.conversion import to_grayscale, image_dimensions
+from src.domain.convolution import apply_convolution, pad_image
+from src.domain.types import ImageMatrix
 
 
 def apply_median_filter(image: ImageMatrix | np.ndarray, kernel_size: int = 5) -> np.ndarray:

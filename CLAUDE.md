@@ -5,42 +5,56 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Running the project
 
 ```bash
-python main.py
+pip install -r requirements.txt   # numpy, opencv-python, matplotlib, PySide6
+python main.py                    # launches the PySide6 node editor
 ```
 
-This opens matplotlib windows sequentially — close each window to advance to the next. The script uses `2_bracos.webp` and `meci.png` from the project root as its input images.
-
-## Dependencies
-
-The project uses `opencv-python`, `numpy`, and `matplotlib`. Install with:
+The graph engine runs headless (no GUI needed) — useful for tests:
 
 ```bash
-pip install opencv-python numpy matplotlib
+python -m pytest tests/           # or run a test function directly if pytest is absent
 ```
 
-There is no `requirements.txt` or virtual environment configuration.
+## What this is
 
-## Architecture
+**PSE-Image** — a node-based dataflow editor for image processing. The user wires
+processing **blocks** into a directed acyclic graph (DAG); each block takes images
+in and produces images out. This is the architectural driver: everything orbits the
+graph, and the filters are the innermost, replaceable detail.
 
-This is an image processing pipeline project (a Photoshop-like tool). It has no GUI yet beyond matplotlib display windows.
+## Architecture — layered, dependencies point inward
 
-**Module layout:**
+```
+gui/            PySide6 canvas, palette, viewers          (framework lives ONLY here)
+  ↓
+application/    use cases: run_workspace, save/load project
+  ↓
+graph/          Workspace (DAG) + topological executor     (headless, fully testable)
+  ↓
+blocks/         Block = adapter declaring ports+parameters (registry pattern)
+  ↓
+domain/         pure algorithms (filters, histogram, …)    (no UI, no I/O orchestration)
 
-- `main.py` — wires everything together; applies a sequence of filters and displays results in a grid
-- `models/models.py` — type aliases only: `ImageMatrix = list[list[int]]` (2-D grayscale) and `FilePath = Optional[str]`
-- `interface/interface.py` — image I/O: `load_image` (cv2 BGR→RGB), `display_multi_image` (matplotlib grid), PGM file read/write with a P2 parser, tkinter file dialogs, and `ImageMatrix`↔NumPy converters
-- `img_process/util.py` — `pad_image`: constant-border padding for convolution; `_to_grayscale`, `_image_dimensions`: internal type-normalisation helpers
-- `img_process/local_process.py` — `apply_convolution(image, kernel)`: core convolution engine; normalises input to grayscale, pads, returns `np.uint32` array
-- `img_process/pop_mask.py` — pre-built filters on top of `apply_convolution`: `apply_median_filter`, `apply_average_filter`, `apply_laplacian_filter`, `apply_gaussian_filter`, `apply_derivative_filter`
-- `img_process/easy_process.py` — pure-Python `ImageMatrix`-based `adjust_brightness` and `apply_threshold` (not currently wired into `main.py`)
-- `others/differences.py` — `compute_grayscale_difference`, `compute_color_difference`: pixel-wise absolute difference; mismatched sizes are cropped to the common region
-- `others/histogram_generator.py` — `generate_histogram`, `normalize_histogram`, `match_histograms`, `plot_histogram`
-- `others/complement_image.py` — `invert_image`: pixel-wise complement (255 − v)
-- `others/morphological_operation.py` — `apply_erosion`, `apply_dilation` (stubs, not yet implemented)
+infrastructure/ PGM codec, cv2 loader, file dialogs        (implements I/O for inner layers)
+```
 
-**Filter mask convention:** all filters require odd-sized kernels; even sizes raise `ValueError`. Kernels larger than the image also raise.
+**The dependency rule:** `domain` knows nothing about blocks or GUI. The GUI depends
+inward, never the reverse. You can execute a whole flow without launching Qt.
 
-**Data types:** filters accept both `ImageMatrix` (list of lists) and NumPy arrays (grayscale or BGR). Use `image_matrix_to_numpy` / `numpy_to_image_matrix` from `interface/interface.py` when crossing the boundary.
+**Package layout** (`src/`):
+
+- `domain/` — `types` (`ImageMatrix`), `conversion`, `convolution` (`apply_convolution` + `pad_image`), `filters` (median/average/laplacian/gaussian/derivative), `point` (brightness/threshold), `histogram` (compute only — no plotting), `difference`, `complement`, `morphology` (stubs)
+- `blocks/` — `base` (`Block`, `Port`, `Parameter`, `BLOCK_REGISTRY`, `@register_block`), then `io_blocks`, `point_blocks`, `filter_blocks`, `analysis_blocks`. Importing `src.blocks` registers all 14 blocks via side-effect.
+- `graph/` — `node`, `connection`, `workspace` (cycle detection, port validation), `executor` (Kahn topological sort), `errors`
+- `application/` — `execution_service.run_workspace`, `project_service` (save/load DAG as JSON)
+- `infrastructure/` — `pgm_codec` (hand-written P2 reader/writer), `image_loader` (cv2 + `ImageMatrix`↔NumPy), `file_dialogs` (tkinter)
+- `gui/` — `app.run()`, `main_window` (minimal shell so far); `canvas/`, `panels/`, `widgets/` are scaffolded but not yet implemented
+
+**Key conventions:**
+- A **Block** is stateless; it *declares* ports + parameter specs and implements a pure `process(inputs, parameters)`. Per-node parameter *values* live on `Node`. The GUI renders parameter panels generically from the declarations — never hand-code UI per operation.
+- All filters require odd-sized kernels (`ValueError` otherwise); kernels larger than the image also raise.
+- Filters accept both `ImageMatrix` (list of lists) and NumPy arrays. cv2 is confined to `infrastructure/` and `domain/conversion.py` / `domain/histogram.py`.
+- **"No ready-made methods" (course rule):** all *algorithms* are hand-written. cv2 is used only for file loading and BGR→gray; if the professor forbids the latter, replace `cvtColor` in `domain/conversion.py` with a hand-rolled luminance conversion.
 
 ---
 

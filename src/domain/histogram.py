@@ -1,9 +1,11 @@
-"""Histogram generation, normalisation, matching, and plotting for grayscale images."""
+"""Histogram computation and matching for grayscale images.
+
+Plotting lives in the GUI layer (gui/panels); this module only computes.
+"""
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
 
-from models.models import ImageMatrix
+from src.domain.types import ImageMatrix
 
 _INTENSITY_LEVELS = 256
 
@@ -76,24 +78,6 @@ def match_histograms(
     if isinstance(source, np.ndarray):
         return np.array(matched, dtype=np.uint8)
     return matched
-
-
-def plot_histogram(histogram: list, title: str = "Histograma", ylabel: str = "Frequência") -> None:
-    """Render a histogram as a bar chart in a matplotlib window.
-
-    Args:
-        histogram: Sequence of 256 values (counts or probabilities).
-        title: Window and chart title.
-        ylabel: Label for the vertical axis.
-    """
-    plt.figure(figsize=(8, 4))
-    plt.bar(range(len(histogram)), histogram, width=1.0, color="black")
-    plt.title(title)
-    plt.xlabel("Intensidade")
-    plt.ylabel(ylabel)
-    plt.xlim(0, len(histogram) - 1)
-    plt.tight_layout()
-    plt.show()
 
 
 def _to_grayscale_uint8(image: ImageMatrix | np.ndarray) -> np.ndarray:

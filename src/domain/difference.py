@@ -1,7 +1,7 @@
 """Pixel-wise absolute difference between two images."""
 import numpy as np
 
-from models.models import ImageMatrix
+from src.domain.types import ImageMatrix
 
 
 def compute_grayscale_difference(image_a: ImageMatrix, image_b: ImageMatrix) -> ImageMatrix:
