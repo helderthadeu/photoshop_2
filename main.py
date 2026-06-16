@@ -1,65 +1,63 @@
-from interface.interface import *
-from img_process.pop_mask import *
-from img_process.local_process import *
-from others.differences import *
-from others.histrogram_generator import (
-    generate_histogram,
-    normalize_histogram,
-    plot_histogram,
+from interface.interface import load_image, display_multi_image
+from img_process.local_process import apply_convolution
+from img_process.pop_mask import (
+    apply_average_filter,
+    apply_derivative_filter,
+    apply_gaussian_filter,
+    apply_laplacian_filter,
+    apply_median_filter,
 )
+from others.differences import compute_color_difference
+from others.histogram_generator import generate_histogram, normalize_histogram, plot_histogram
+
+SOURCE_IMAGE_PATH = "2_bracos.webp"
+MECI_IMAGE_PATH = "meci.png"
 
 
-IMG_PATH = "2_bracos.webp"
-MECI_PATH = "meci.png"
+def main() -> None:
+    source_image = load_image(SOURCE_IMAGE_PATH)
+    print("Image loaded successfully.")
 
+    images_to_display = [(source_image, "2 braços - original", "")]
 
-def main():
-    
-    img  = load_image(IMG_PATH)
-    print_img_list = []
-    print("Image load succesfully")
-    
-    print_img_list.append((img, "2 braços - original", ""))
-    
-    median_img = median_filter(img,7)
-    
-    print_img_list.append((median_img, "Imagem Final (Filtro de Mediana)", "gray"))
-    
-    convolutional_img  = convolutional_mask(img, 
-                                            [
-                                                [0, 1, 0 ],
-                                                [1, -4, 1],
-                                                [0, 1, 0 ]
-                                             ]
-                                            )
-    
-    print_img_list.append((convolutional_img, "Imagem Final (Filtro laplaciano convolucional)", "gray"))
-    
-    average_img = avg_filter(img, 5)
-    print_img_list.append((average_img, "Imagem Final (Filtro de média)", "gray"))
-        
-    laplacian_img = laplacian_filter(img)
-    print_img_list.append((laplacian_img, "Imagem Final (Filtro Laplaciano)", "gray"))
+    median_result = apply_median_filter(source_image, 7)
+    images_to_display.append((median_result, "Filtro de Mediana", "gray"))
 
-    meci_img = load_image(MECI_PATH)
-    diff_img = difference_between_colored_images(img, meci_img)
-    
-    print_img_list.append((diff_img, "Diferença entre Dois Braços e Messi"))
-    
-    gaussian_img = gaussian_filter(img, 7)
-    print_img_list.append((gaussian_img, "Imagem Final (Filtro Gaussiano)", "gray"))
-    
-    derivative_img = derivative_filter(img, 7)
-    print_img_list.append((derivative_img, "Imagem Final (Filtro de derivada)", "gray"))
-    
-    display_multi_image(print_img_list)
+    laplacian_conv_result = apply_convolution(
+        source_image,
+        [
+            [0,  1, 0],
+            [1, -4, 1],
+            [0,  1, 0],
+        ],
+    )
+    images_to_display.append((laplacian_conv_result, "Filtro Laplaciano Convolucional", "gray"))
 
-    histogram = generate_histogram(img)
-    plot_histogram(histogram, "Histograma", "Frequencia")
-    
+    average_result = apply_average_filter(source_image, 5)
+    images_to_display.append((average_result, "Filtro de Média", "gray"))
+
+    laplacian_result = apply_laplacian_filter(source_image)
+    images_to_display.append((laplacian_result, "Filtro Laplaciano", "gray"))
+
+    meci_image = load_image(MECI_IMAGE_PATH)
+    color_difference = compute_color_difference(source_image, meci_image)
+    images_to_display.append((color_difference, "Diferença entre Dois Braços e Messi"))
+
+    gaussian_result = apply_gaussian_filter(source_image, 7)
+    images_to_display.append((gaussian_result, "Filtro Gaussiano", "gray"))
+
+    derivative_result = apply_derivative_filter(source_image, 7)
+    images_to_display.append((derivative_result, "Filtro de Derivada", "gray"))
+
+    display_multi_image(images_to_display)
+
+    histogram = generate_histogram(source_image)
+    plot_histogram(histogram, "Histograma", "Frequência")
+
     normalized_histogram = normalize_histogram(histogram)
     plot_histogram(normalized_histogram, "Histograma Normalizado", "Probabilidade")
-    
+
+
 if __name__ == "__main__":
-    print("Start image processing")
+    print("Iniciando processamento de imagem.")
     main()

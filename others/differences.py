@@ -1,70 +1,85 @@
-import cv2
+"""Pixel-wise absolute difference between two images."""
 import numpy as np
-from img_process.util import complete_img
+
+from models.models import ImageMatrix
 
 
-def difference_between_grey_images(img1, img2):
+def compute_grayscale_difference(image_a: ImageMatrix, image_b: ImageMatrix) -> ImageMatrix:
+    """Return the absolute pixel-wise difference between two grayscale images.
 
-    height = min(len(img1), len(img2))
-    width = min(len(img1[0]), len(img2[0]))
+    When images differ in size, only the overlapping region is compared and
+    a warning is printed to stdout.
 
-    if len(img1) != len(img2) or len(img1[0]) != len(img2[0]):
-        print(
-            f"Aviso: as imagens possuem tamanhos diferentes.\n"
-            f"Imagem 1: ({len(img1)}, {len(img1[0])})\n"
-            f"Imagem 2: ({len(img2)}, {len(img2[0])})\n"
-            f"Comparando apenas a região comum ({height}x{width})."
-        )
+    Args:
+        image_a: First grayscale ImageMatrix.
+        image_b: Second grayscale ImageMatrix.
 
-    diff_img = []
+    Returns:
+        ImageMatrix where each value is |image_a[r][c] - image_b[r][c]|.
+    """
+    height = min(len(image_a), len(image_b))
+    width = min(len(image_a[0]), len(image_b[0]))
 
-    for i in range(height):
-        row = []
+    _warn_if_sizes_differ(image_a, image_b, height, width)
 
-        for j in range(width):
-            diff = abs(
-                int(img1[i][j]) -
-                int(img2[i][j])
-            )
+    result: ImageMatrix = []
 
-            row.append(diff)
+    for row in range(height):
+        row_data = []
+        for col in range(width):
+            diff = abs(int(image_a[row][col]) - int(image_b[row][col]))
+            row_data.append(diff)
+        result.append(row_data)
 
-        diff_img.append(row)
-
-    return diff_img
+    return result
 
 
-def difference_between_colored_images(img1, img2):
-    height = min(len(img1), len(img2))
-    width = min(len(img1[0]), len(img2[0]))
+def compute_color_difference(
+    image_a: np.ndarray,
+    image_b: np.ndarray,
+) -> list[list[list[int]]]:
+    """Return the absolute pixel-wise difference between two colour images.
 
-    if len(img1) != len(img2) or len(img1[0]) != len(img2[0]):
-        print(
-            f"Aviso: as imagens possuem tamanhos diferentes.\n"
-            f"Imagem 1: ({len(img1)}, {len(img1[0])}, 3)\n"
-            f"Imagem 2: ({len(img2)}, {len(img2[0])}, 3)\n"
-            f"Comparando apenas a região comum ({height}x{width})."
-        )
+    Operates channel-by-channel (R, G, B). When images differ in size, only
+    the overlapping region is compared and a warning is printed to stdout.
 
-    diff_img = []
+    Args:
+        image_a: First image as an H×W×3 array or nested list.
+        image_b: Second image as an H×W×3 array or nested list.
 
-    for i in range(height):
-        row = []
+    Returns:
+        Nested list of shape H×W×3 with absolute channel differences.
+    """
+    height = min(len(image_a), len(image_b))
+    width = min(len(image_a[0]), len(image_b[0]))
 
-        for j in range(width):
+    _warn_if_sizes_differ(image_a, image_b, height, width)
 
+    result = []
+
+    for row in range(height):
+        row_data = []
+        for col in range(width):
             pixel = []
-
-            for c in range(3):  # B, G, R
-                diff = abs(
-                    int(img1[i][j][c]) -
-                    int(img2[i][j][c])
-                )
-
+            for channel in range(3):
+                diff = abs(int(image_a[row][col][channel]) - int(image_b[row][col][channel]))
                 pixel.append(diff)
+            row_data.append(pixel)
+        result.append(row_data)
 
-            row.append(pixel)
+    return result
 
-        diff_img.append(row)
 
-    return diff_img
+def _warn_if_sizes_differ(
+    image_a: ImageMatrix | np.ndarray,
+    image_b: ImageMatrix | np.ndarray,
+    cropped_height: int,
+    cropped_width: int,
+) -> None:
+    if len(image_a) != len(image_b) or len(image_a[0]) != len(image_b[0]):
+        print(
+            f"Aviso: imagens com tamanhos diferentes. "
+            f"Imagem A: ({len(image_a)}, {len(image_a[0])}), "
+            f"Imagem B: ({len(image_b)}, {len(image_b[0])}). "
+            f"Comparando região comum: {cropped_height}×{cropped_width}."
+        )

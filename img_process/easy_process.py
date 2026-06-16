@@ -1,51 +1,55 @@
-# import cv2
-# import numpy as np
+"""Point-wise image processing operations that work directly on ImageMatrix."""
+from models.models import ImageMatrix
 
-# def change_bright(image, value):
-#     pass
+_MAX_PIXEL = 255
+_MIN_PIXEL = 0
 
-# def limiar_fitler(image, limiar):
-#     pass
 
-from models import ImageMatrix
+def adjust_brightness(matrix: ImageMatrix, bias: int) -> ImageMatrix:
+    """Shift every pixel intensity by a constant bias, clamping to [0, 255].
 
-def adjust_brightness(image_matrix: ImageMatrix, bias: int) -> ImageMatrix:
+    Args:
+        matrix: Input 8-bit grayscale ImageMatrix.
+        bias: Value added to each pixel (positive = brighter, negative = darker).
+
+    Returns:
+        New ImageMatrix with adjusted brightness.
     """
-    Adjusts the brightness of a grayscale image by adding a bias value to each pixel.
-    """
-    height: int = len(image_matrix)
-    width: int = len(image_matrix[0]) if height > 0 else 0
-    
-    output_matrix: ImageMatrix = [[0] * width for _ in range(height)]
-    
+    height = len(matrix)
+    width = len(matrix[0]) if height > 0 else 0
+    result: ImageMatrix = []
+
     for row in range(height):
+        row_data = []
         for col in range(width):
-            new_value: int = image_matrix[row][col] + bias
-            
-            if new_value > 255:
-                output_matrix[row][col] = 255
-            elif new_value < 0:
-                output_matrix[row][col] = 0
-            else:
-                output_matrix[row][col] = int(new_value)
-                
-    return output_matrix
+            new_value = max(_MIN_PIXEL, min(_MAX_PIXEL, matrix[row][col] + bias))
+            row_data.append(new_value)
+        result.append(row_data)
+
+    return result
 
 
-def apply_threshold(image_matrix: ImageMatrix, threshold_value: int) -> ImageMatrix:
+def apply_threshold(matrix: ImageMatrix, threshold: int) -> ImageMatrix:
+    """Binarise a grayscale image using a fixed intensity threshold.
+
+    Pixels at or above threshold become 255; those below become 0.
+
+    Args:
+        matrix: Input 8-bit grayscale ImageMatrix.
+        threshold: Cut-off intensity value in [0, 255].
+
+    Returns:
+        New binary ImageMatrix (values are 0 or 255).
     """
-    Applies a binary thresholding operation to a grayscale image.
-    """
-    height: int = len(image_matrix)
-    width: int = len(image_matrix[0]) if height > 0 else 0
-    
-    output_matrix: ImageMatrix = [[0] * width for _ in range(height)]
-    
+    height = len(matrix)
+    width = len(matrix[0]) if height > 0 else 0
+    result: ImageMatrix = []
+
     for row in range(height):
+        row_data = []
         for col in range(width):
-            if image_matrix[row][col] >= threshold_value:
-                output_matrix[row][col] = 255
-            else:
-                output_matrix[row][col] = 0
-                
-    return output_matrix
+            pixel = _MAX_PIXEL if matrix[row][col] >= threshold else _MIN_PIXEL
+            row_data.append(pixel)
+        result.append(row_data)
+
+    return result

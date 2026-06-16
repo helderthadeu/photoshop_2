@@ -1,46 +1,63 @@
-import cv2
+"""Core convolution engine for spatial image filters."""
 import numpy as np
-from img_process.util import complete_img
+
+from img_process.util import pad_image, to_grayscale
+from models.models import ImageMatrix
 
 
+def apply_convolution(
+    image: ImageMatrix | np.ndarray,
+    kernel: list[list[float]],
+) -> np.ndarray:
+    """Apply a 2-D convolution kernel to a grayscale image.
 
-def convolutional_mask(image, mask:list[list]):
+    The image is converted to grayscale before processing when needed.
+    Kernel dimensions must be odd and smaller than the image.
 
-    height = mask.__len__() 
-    width = mask[0].__len__()
-    
-    height_img, width_img, _ =  image.shape
-    if (height % 2) == 0 or (width % 2) == 0 :
-        raise Exception("Size filter error! Please select a filter with odd size.")
-    
-    if(height>height_img) or (width> width_img):
-        raise Exception("Size filter error! Please select a filter with lower size.")
-    
-    gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    gray_img = gray_img.astype(np.int32)
-    
-    padding_x = int((height-1)/2)
-    padding_y = int((width-1)/2)
-    
-    completed_img = complete_img(gray_img, padding_x, padding_y)
-    
-    final_img = []
-    for index_x, x in enumerate(completed_img[padding_x:-padding_x]):
-        row_list = []
+    Args:
+        image: Input image as ImageMatrix or NumPy array (grayscale or BGR).
+        kernel: 2-D list of kernel weights (both dimensions must be odd).
 
-        for index_y,y in enumerate(x[padding_y:-padding_y]):
-            filtered_img = []
+    Returns:
+        Convolved image as a uint32 NumPy array.
 
-            for i in range(height):
-                for j in range(width):
-                    temp = completed_img[index_x + i][index_y + j] * mask[i][j]
-                    filtered_img.append(temp)
+    Raises:
+        ValueError: If kernel dimensions are even or larger than the image.
+    """
+    kernel_height = len(kernel)
+    kernel_width = len(kernel[0])
 
-            row_list.append(sum(filtered_img))
-        final_img.append(row_list)
+    grayscale = to_grayscale(image)
+    image_height, image_width = grayscale.shape
 
-    # Convert final_img to a NumPy array for display
-    final_img_array = np.array(final_img, dtype=np.uint32)
-    
-    return final_img_array
+    _validate_kernel(kernel_height, kernel_width, image_height, image_width)
 
+    row_pad = kernel_height // 2
+    col_pad = kernel_width // 2
+    padded = pad_image(grayscale, row_pad, col_pad)
+
+    result_rows = []
+
+    for row in range(image_height):
+        row_data = []
+        for col in range(image_width):
+            total = 0.0
+            for ki in range(kernel_height):
+                for kj in range(kernel_width):
+                    total += padded[row + ki][col + kj] * kernel[ki][kj]
+            row_data.append(total)
+        result_rows.append(row_data)
+
+    return np.array(result_rows, dtype=np.uint32)
+
+
+def _validate_kernel(
+    kernel_height: int,
+    kernel_width: int,
+    image_height: int,
+    image_width: int,
+) -> None:
+    if kernel_height % 2 == 0 or kernel_width % 2 == 0:
+        raise ValueError("Kernel dimensions must be odd.")
+    if kernel_height > image_height or kernel_width > image_width:
+        raise ValueError("Kernel must be smaller than the image.")
