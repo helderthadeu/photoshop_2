@@ -1,0 +1,26 @@
+[project]
+name = "pse-image"
+version = "0.1.0"
+description = "PSE-Image — a node-based dataflow editor for image processing"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "opencv-python",
+    "PySide6",
+]
+
+[project.scripts]
+pse-image = "src.gui.app:run"
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.black]
+line-length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
