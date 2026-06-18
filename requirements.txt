@@ -1,3 +1,4 @@
+# Requires Python 3.10 or newer.
 numpy
 opencv-python
 PySide6

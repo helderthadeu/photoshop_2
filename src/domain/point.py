@@ -5,7 +5,7 @@ _MAX_PIXEL = 255
 _MIN_PIXEL = 0
 
 
-def adjust_brightness(matrix: ImageMatrix, bias: int) -> ImageMatrix:
+def adjust_brightness(matrix: ImageMatrix, bias: float) -> ImageMatrix:
     """Shift every pixel intensity by a constant bias, clamping to [0, 255].
 
     Args:
@@ -26,7 +26,8 @@ def adjust_brightness(matrix: ImageMatrix, bias: int) -> ImageMatrix:
             # arrays, where `pixel + bias` would wrap on overflow (so +100%
             # looped back to the original) or reject a negative bias outright.
             pixel = int(matrix[row][col])
-            new_value = max(_MIN_PIXEL, min(_MAX_PIXEL, pixel + bias))
+            delta = round(bias * pixel)
+            new_value = max(_MIN_PIXEL, min(_MAX_PIXEL, pixel + delta))
             row_data.append(new_value)
         result.append(row_data)
 

@@ -7,6 +7,8 @@ without writing code.
 
 ## Requirements
 
+Python 3.10 or newer is required.
+
 ```bash
 pip install -r requirements.txt
 ```

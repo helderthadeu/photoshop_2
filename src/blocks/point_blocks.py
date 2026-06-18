@@ -11,8 +11,6 @@ from src.blocks.base import (
 )
 from src.domain.point import adjust_brightness, apply_threshold
 
-_MAX_PIXEL = 255
-
 
 @register_block
 class BrightnessBlock(Block):
@@ -31,8 +29,8 @@ class BrightnessBlock(Block):
         return [Parameter("percent", "Brightness", ParameterType.INTEGER, 0, -100, 100, unit="%")]
 
     def process(self, inputs: dict[str, Any], parameters: dict[str, Any]) -> dict[str, Any]:
-        # ±100% maps to the full ±255 intensity shift the domain expects.
-        bias = round(parameters["percent"] / 100 * _MAX_PIXEL)
+        # ±100% maps to ±1.0 factor for brightness adjustment.
+        bias = parameters["percent"] / 100
         return {"image": adjust_brightness(inputs["image"], bias)}
 
 
