@@ -1,13 +1,16 @@
-"""Hand-written Plain PGM (P2) reader and writer — no ready-made codecs."""
+"""Hand-written Plain PGM (P2) writer and cv2-based reader for format flexibility."""
 from pathlib import Path
+
+import cv2
 
 from src.domain.types import ImageMatrix
 
 
 def read_pgm_file(file_path: str | Path) -> ImageMatrix:
-    """Parse a Plain PGM (P2) file and return its pixel data as an ImageMatrix.
+    """Parse a PGM file and return its pixel data as an ImageMatrix.
 
-    Only 8-bit ASCII PGM files (magic number P2) are supported.
+    Supports both ASCII (P2) and binary (P5) PGM formats, 8-bit only.
+    Uses OpenCV for robust reading of both formats.
 
     Args:
         file_path: Path to the .pgm file.
@@ -16,40 +19,31 @@ def read_pgm_file(file_path: str | Path) -> ImageMatrix:
         2-D list of integer pixel values in [0, 255].
 
     Raises:
-        ValueError: If the file format is not P2 or exceeds 8-bit range.
+        ValueError: If the file format is not PGM or exceeds 8-bit range.
         FileNotFoundError: If the file does not exist.
     """
-    tokens = Path(file_path).read_text().split()
-
-    if not tokens:
-        raise ValueError("The PGM file is empty.")
-
-    if tokens[0] != "P2":
-        raise ValueError(f"Unsupported format '{tokens[0]}'. Only P2 (ASCII) is allowed.")
-
-    width, height, max_value = int(tokens[1]), int(tokens[2]), int(tokens[3])
-
-    if max_value > 255:
-        raise ValueError("Only 8-bit images (max value ≤ 255) are supported.")
-
-    pixel_tokens = tokens[4:]
-    matrix: ImageMatrix = []
-    index = 0
-
-    for _ in range(height):
-        row = []
-        for c in range(width):
-            row.append(int(pixel_tokens[index + c]))
-        matrix.append(row)
-        index += width
-
+    source = Path(file_path)
+    
+    # Use cv2 to handle both P2 (ASCII) and P5 (binary) formats
+    image = cv2.imread(str(source), cv2.IMREAD_GRAYSCALE)
+    if image is None:
+        raise FileNotFoundError(f"Cannot read PGM file: {source}")
+    
+    # Convert numpy array to list of lists
+    matrix = image.tolist()
+    
+    # Verify 8-bit range
+    max_val = max(max(row) for row in matrix) if matrix else 0
+    if max_val > 255:
+        raise ValueError(f"Only 8-bit images (max value ≤ 255) are supported, got {max_val}.")
+    
     return matrix
 
 
 def read_pgm_header(file_path: str | Path) -> tuple[int, int, int]:
-    """Return the (width, height, max_value) declared in a Plain PGM (P2) header.
+    """Return the (width, height, max_value) declared in a PGM header.
 
-    Useful for showing image metadata without consuming the pixel payload.
+    Supports both ASCII (P2) and binary (P5) PGM formats.
 
     Args:
         file_path: Path to the .pgm file.
@@ -58,17 +52,36 @@ def read_pgm_header(file_path: str | Path) -> tuple[int, int, int]:
         A tuple of width, height, and the maximum intensity value.
 
     Raises:
-        ValueError: If the file is not a P2 PGM or its header is incomplete.
+        ValueError: If the file is not a valid PGM or its header is incomplete.
         FileNotFoundError: If the file does not exist.
     """
-    tokens = Path(file_path).read_text().split()
-
-    if len(tokens) < 4:
-        raise ValueError("The PGM file is missing a valid P2 header.")
-    if tokens[0] != "P2":
-        raise ValueError(f"Unsupported format '{tokens[0]}'. Only P2 (ASCII) is allowed.")
-
-    return int(tokens[1]), int(tokens[2]), int(tokens[3])
+    source = Path(file_path)
+    
+    # Read header manually to avoid loading entire file
+    with open(source, 'rb') as f:
+        # Read first line (magic number)
+        magic = f.readline().decode('ascii').strip()
+        if magic not in ('P2', 'P5'):
+            raise ValueError(f"Unsupported format '{magic}'. Only P2 (ASCII) and P5 (binary) are allowed.")
+        
+        # Skip comments
+        while True:
+            line = f.readline().decode('ascii').strip()
+            if line and not line.startswith('#'):
+                break
+        
+        # Parse width height
+        w, h = map(int, line.split())
+        
+        # Skip comments and read max value
+        while True:
+            line = f.readline().decode('ascii').strip()
+            if line and not line.startswith('#'):
+                break
+        
+        max_val = int(line)
+    
+    return w, h, max_val
 
 
 def write_pgm_file(file_path: str | Path, matrix: ImageMatrix) -> None:
