@@ -22,7 +22,11 @@ def adjust_brightness(matrix: ImageMatrix, bias: int) -> ImageMatrix:
     for row in range(height):
         row_data = []
         for col in range(width):
-            new_value = max(_MIN_PIXEL, min(_MAX_PIXEL, matrix[row][col] + bias))
+            # Cast to a Python int first: upstream blocks emit uint8 NumPy
+            # arrays, where `pixel + bias` would wrap on overflow (so +100%
+            # looped back to the original) or reject a negative bias outright.
+            pixel = int(matrix[row][col])
+            new_value = max(_MIN_PIXEL, min(_MAX_PIXEL, pixel + bias))
             row_data.append(new_value)
         result.append(row_data)
 
