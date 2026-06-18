@@ -30,6 +30,7 @@ class GraphScene(QGraphicsScene):
     node_activated = Signal(object)
     connection_failed = Signal(str)
     graph_changed = Signal()
+    node_added = Signal(object)
 
     def __init__(self, workspace: Workspace) -> None:
         super().__init__()
@@ -61,7 +62,10 @@ class GraphScene(QGraphicsScene):
         item = NodeItem(node)
         self.addItem(item)
         self._node_items[node_id] = item
-        self.graph_changed.emit()
+        # A freshly placed node is not yet wired into any flow, so it cannot
+        # change an existing preview: announce the addition without forcing the
+        # heavy full re-execution that `graph_changed` triggers.
+        self.node_added.emit(node)
         return item
 
     def load_workspace(self, workspace: Workspace) -> None:

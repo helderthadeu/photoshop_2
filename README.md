@@ -46,7 +46,9 @@ A dark, DaVinci-Fusion-inspired workspace:
 - **Preview viewers** (top) — **ORIGINAL** always shows the loaded source image (the Load
   PGM output) and never changes with downstream edits; **PROCESSED** shows the result of
   the selected node (or the latest one). Both refresh whenever the graph or a parameter
-  changes.
+  changes. Refreshes are debounced and run on a background thread, with per-node result
+  caching, so editing stays responsive even with heavy filters; dropping a not-yet-wired
+  node triggers no recomputation.
 - **Console** (bottom) — execution log and error feedback.
 - **Histogram** — double-click a Histogram node to open its bar-chart viewer. Wiring a
   Histogram into a Save PGM node writes the chart to disk as a PGM.
