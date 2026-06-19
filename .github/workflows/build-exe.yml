@@ -30,10 +30,12 @@ jobs:
         run: |
           pyinstaller --onefile --windowed `
             --name "PSE-Image" `
-            --add-data "assets;assets" `
             --distpath "dist" `
             --workpath "build" `
             --specpath "spec" `
+            --hidden-import=PySide6 `
+            --hidden-import=cv2 `
+            --hidden-import=numpy `
             src/__main__.py
       
       - name: List dist contents
