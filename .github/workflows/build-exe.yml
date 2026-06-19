@@ -5,7 +5,7 @@ on:
     tags:
       - 'v*'
     branches:
-      - main
+      - 'release/**'
   workflow_dispatch:
 
 jobs:
@@ -47,11 +47,3 @@ jobs:
           name: PSE-Image-Windows
           path: dist/PSE-Image.exe
           retention-days: 30
-      
-      - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/PSE-Image.exe
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
