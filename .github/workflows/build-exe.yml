@@ -39,7 +39,7 @@ jobs:
             src/__main__.py
       
       - name: List dist contents
-        run: ls -la dist/
+        run: dir dist/
       
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
